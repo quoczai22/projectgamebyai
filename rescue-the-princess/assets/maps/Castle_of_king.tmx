@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="150" height="20" tilewidth="16" tileheight="16" infinite="0" nextlayerid="20" nextobjectid="1">
  <tileset firstgid="1" name="Decorations (32x32)" tilewidth="16" tileheight="16" tilecount="168" columns="14">
-  <image source="../images/Sprites/14-TileSets/Decorations (32x32).png" width="224" height="192"/>
+  <image source="../images/14-TileSets/Decorations (32x32).png" width="224" height="192"/>
  </tileset>
  <tileset firstgid="169" name="Terrain (32x32)" tilewidth="16" tileheight="16" tilecount="988" columns="38">
-  <image source="../images/Sprites/14-TileSets/Terrain (32x32).png" width="608" height="416"/>
+  <image source="../images/14-TileSets/Terrain (32x32).png" width="608" height="416"/>
  </tileset>
  <tileset firstgid="1157" name="Idle" tilewidth="16" tileheight="16" tilecount="1" columns="1">
-  <image source="../images/Sprites/08-Box/Idle.png" width="22" height="16"/>
+  <image source="../images/08-Box/Idle.png" width="22" height="16"/>
  </tileset>
  <tileset firstgid="1158" name="castle-tileset" tilewidth="16" tileheight="16" tilecount="128" columns="8">
   <image source="../images/castle-tileset.png" width="128" height="256"/>
