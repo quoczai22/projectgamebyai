@@ -15,6 +15,7 @@ SCREEN_TITLE = "Rescue The Princess"
 # Tỷ lệ scale
 TILE_SCALING = 2.0
 CHARACTER_SCALING = 0.15
+CHARACTER_CHAT_SCALING = 0.3
 
 # Vật lý
 GRAVITY = 1.0

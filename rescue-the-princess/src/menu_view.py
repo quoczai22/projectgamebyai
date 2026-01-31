@@ -1,5 +1,6 @@
 import arcade
 import os
+import pyglet
 from settings import SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE, ASSETS_PATH
 from story_view import StoryView
 # Lưu ý: KHÔNG import SettingsView ở đây để tránh lỗi vòng lặp (Circular Import)
@@ -23,7 +24,7 @@ class MenuView(arcade.View):
                 print(f"Lỗi ảnh nền: {e}")
 
         # --- 2. LOAD FONT PIXEL ---
-        font_path = os.path.join(ASSETS_PATH, "fonts", "PressStart2P-Regular.ttf")
+        font_path = os.path.join(ASSETS_PATH, "fonts", "SVN-Determination Sans.ttf")
         self.pixel_font = "Arial"
         if os.path.exists(font_path):
             try:
@@ -32,23 +33,23 @@ class MenuView(arcade.View):
             except Exception as e:
                 print(f"Lỗi load font: {e}")
 
-        # --- 3. KHỞI TẠO NHẠC NỀN (QUAN TRỌNG) ---
-        # Chúng ta lưu player vào self.window để nó tồn tại xuyên suốt game
-        
-        # Kiểm tra nếu biến player chưa tồn tại trong window thì tạo mới
+        # --- 3. KHỞI TẠO NHẠC NỀN ---
         if not hasattr(self.window, "bg_player"):
             self.window.bg_player = None
-            self.window.music_volume = 0.5 # Mặc định 50%
+            self.window.music_volume = 0.5
             self.window.is_muted = False
 
         music_path = os.path.join(ASSETS_PATH, "sounds", "menu_music.wav")
-        
-        # Chỉ phát nhạc nếu chưa có nhạc nào đang chạy
         if self.window.bg_player is None and os.path.exists(music_path):
             try:
-                bg_music = arcade.load_sound(music_path)
-                # Lưu trình phát nhạc vào biến toàn cục của cửa sổ
-                self.window.bg_player = bg_music.play(volume=self.window.music_volume, loop=True)
+                # Dùng pyglet để loop nhạc
+                source = pyglet.media.load(music_path, streaming=False)
+                player = pyglet.media.Player()
+                player.queue(source)
+                player.loop = True
+                player.volume = self.window.music_volume
+                player.play()
+                self.window.bg_player = player
             except Exception as e:
                 print(f"Lỗi phát nhạc: {e}")
 
@@ -85,10 +86,10 @@ class MenuView(arcade.View):
 
         # --- Settings ---
         arcade.draw_text(
-            "PRESS 'S' FOR SETTINGS",
+            "PRESS 'G' FOR SETTINGS",
             SCREEN_WIDTH // 2,
             SCREEN_HEIGHT // 2 - 60,
-            arcade.color.CYAN, # Đổi màu Cyan cho khác biệt
+            arcade.color.CYAN,
             font_size=10,
             font_name=self.pixel_font,
             anchor_x="center"
@@ -107,14 +108,19 @@ class MenuView(arcade.View):
 
     def on_key_press(self, key, modifiers):
         if key == arcade.key.ENTER:
+            # --- Tắt nhạc khi vào game ---
+            if hasattr(self.window, "bg_player") and self.window.bg_player:
+                self.window.bg_player.pause()
+                self.window.bg_player.delete()
+                self.window.bg_player = None
+
             next_view = StoryView()
             self.window.show_view(next_view)
             
         elif key == arcade.key.ESCAPE:
             arcade.exit()
             
-        elif key == arcade.key.S:
-            # Import bên trong hàm để tránh lỗi Circular Import
+        elif key == arcade.key.G:
             from settings_view import SettingsView 
             next_view = SettingsView()
             self.window.show_view(next_view)

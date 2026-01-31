@@ -3,7 +3,7 @@ import os
 from settings import *
 from day_level import DayView 
 from soldier import Soldier
-from orc_bot import OrcBot   # Bot kế thừa Orc
+from king import King   # thêm vua
 
 class CastleView(arcade.View):
     def __init__(self):
@@ -13,9 +13,8 @@ class CastleView(arcade.View):
         self.camera = None
         
         self.soldier = None
-        self.orc_bot = None
         self.soldier_engine = None
-        self.orc_engine = None
+        self.king = None
         
         self.view_left = 0
         self.map_width_pixels = 0 
@@ -44,11 +43,11 @@ class CastleView(arcade.View):
         self.soldier.is_running = False
         self.scene.add_sprite("Soldier", self.soldier)
 
-        # OrcBot
-        self.orc_bot = OrcBot()
-        self.orc_bot.center_x = SCREEN_WIDTH + 200
-        self.orc_bot.center_y = 200
-        self.scene.add_sprite("OrcBot", self.orc_bot)
+        # King sát mép trái
+        self.king = King()
+        self.king.center_x = 210   
+        self.king.center_y = 230
+        self.scene.add_sprite("King", self.king)
 
         # Physics
         walls_list = []
@@ -57,9 +56,6 @@ class CastleView(arcade.View):
 
         self.soldier_engine = arcade.PhysicsEnginePlatformer(
             self.soldier, gravity_constant=GRAVITY, walls=walls_list
-        )
-        self.orc_engine = arcade.PhysicsEnginePlatformer(
-            self.orc_bot, gravity_constant=GRAVITY, walls=walls_list
         )
 
         # Camera
@@ -74,11 +70,14 @@ class CastleView(arcade.View):
 
     def on_draw(self):
         self.clear()
-        if self.camera: self.camera.use()
-        if self.scene: self.scene.draw()
-            
-        if self.soldier.center_x >= (self.map_width_pixels - 300):
-            arcade.draw_text("NHẤN ENTER ĐỂ MỞ CỔNG", self.view_left + 300, 300, arcade.color.WHITE, 20, bold=True)
+        if self.camera: 
+            self.camera.use()
+        if self.scene: 
+            self.scene.draw()
+
+        if self.soldier and self.soldier.center_x >= (self.map_width_pixels - 300):
+            arcade.draw_text("NHẤN ENTER ĐỂ MỞ CỔNG", self.view_left + 300, 300,
+                             arcade.color.WHITE, 20, bold=True)
 
         if self.fade_alpha > 0:
             rect = arcade.LBWH(self.view_left, 0, SCREEN_WIDTH, SCREEN_HEIGHT)
@@ -94,26 +93,27 @@ class CastleView(arcade.View):
                 self.fade_state = "PLAYING"
         
         elif self.fade_state == "PLAYING":
-            self.soldier_engine.update()
-            self.orc_engine.update()
-            self.scene.update_animation(delta_time, ["Soldier", "OrcBot"]) 
-            self.orc_bot.update_ai(self.soldier, self.tile_map, self.orc_engine)
+            if self.soldier_engine:
+                self.soldier_engine.update()
+            if self.scene:
+                self.scene.update_animation(delta_time, ["Soldier", "King"]) 
             
             # Camera follow Soldier
-            target_x = self.soldier.center_x - (SCREEN_WIDTH / 2)
-            if target_x < 0: target_x = 0
-            max_x = self.map_width_pixels - SCREEN_WIDTH
-            if target_x > max_x: target_x = max_x
-            self.view_left = arcade.math.lerp(self.view_left, target_x, 0.1)
-            
-            # Giới hạn map cho Soldier
-            if self.soldier.left < 0: self.soldier.left = 0
-            if self.soldier.right > self.map_width_pixels: self.soldier.right = self.map_width_pixels
-            if self.soldier.center_y < -100:
-                print("Rơi khỏi map! Reset vị trí.")
-                self.soldier.center_x = 600
-                self.soldier.center_y = 200
-                self.soldier.change_y = 0
+            if self.soldier:
+                target_x = self.soldier.center_x - (SCREEN_WIDTH / 2)
+                if target_x < 0: target_x = 0
+                max_x = self.map_width_pixels - SCREEN_WIDTH
+                if target_x > max_x: target_x = max_x
+                self.view_left = arcade.math.lerp(self.view_left, target_x, 0.1)
+                
+                # Giới hạn map cho Soldier
+                if self.soldier.left < 0: self.soldier.left = 0
+                if self.soldier.right > self.map_width_pixels: self.soldier.right = self.map_width_pixels
+                if self.soldier.center_y < -100:
+                    print("Rơi khỏi map! Reset vị trí.")
+                    self.soldier.center_x = 600
+                    self.soldier.center_y = 200
+                    self.soldier.change_y = 0
 
         elif self.fade_state == "FADE_OUT":
             self.fade_alpha += fade_speed
@@ -130,15 +130,22 @@ class CastleView(arcade.View):
         self.window.show_view(next_view)
 
     def on_key_press(self, key, modifiers):
-        if self.fade_state != "PLAYING": return
+        if self.fade_state != "PLAYING": 
+            return
 
+        if not self.soldier:
+            return
+
+        # Soldier controls
         if key in (arcade.key.LSHIFT, arcade.key.RSHIFT):
             self.soldier.is_running = True
-            if self.soldier.change_x > 0: self.soldier.change_x = PLAYER_RUN_SPEED
-            elif self.soldier.change_x < 0: self.soldier.change_x = -PLAYER_RUN_SPEED
+            if self.soldier.change_x > 0: 
+                self.soldier.change_x = PLAYER_RUN_SPEED
+            elif self.soldier.change_x < 0: 
+                self.soldier.change_x = -PLAYER_RUN_SPEED
 
         elif key in (arcade.key.UP, arcade.key.SPACE, arcade.key.W):
-            if self.soldier_engine.can_jump():
+            if self.soldier_engine and self.soldier_engine.can_jump():
                 self.soldier.change_y = PLAYER_JUMP_SPEED
 
         elif key in (arcade.key.LEFT, arcade.key.A):
@@ -153,7 +160,14 @@ class CastleView(arcade.View):
             if self.soldier.center_x >= limit_x:
                 self.fade_state = "FADE_OUT"
 
+        # Tương tác với vua
+        if self.king:
+            self.king.on_key_press(key, self.soldier)
+
     def on_key_release(self, key, modifiers):
+        if not self.soldier:
+            return
+
         if key in (arcade.key.LSHIFT, arcade.key.RSHIFT):
             self.soldier.is_running = False
             if self.soldier.change_x > 0:

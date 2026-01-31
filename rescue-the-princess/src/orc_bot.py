@@ -1,10 +1,14 @@
-import arcade
+from character import Character
 from settings import *
-from orc import Orc
 from pathfinding import a_star_search
 
 RIGHT_FACING = 0
 LEFT_FACING = 1
+
+class Orc(Character):
+    def __init__(self):
+        super().__init__(base_folder="Orc/PNG/PNG Sequences", prefix="0_Orc")
+        # Orc cơ bản: có animation, di chuyển như Soldier nhưng không nhận input
 
 class OrcBot(Orc):
     def __init__(self):
