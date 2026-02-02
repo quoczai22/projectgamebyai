@@ -125,8 +125,12 @@ class FinalView(arcade.View):
         if self.fade_state != "PLAYING":
             return
 
+        # --- ATTACK ---
+        if key == arcade.key.F:
+            self.soldier.attack()
+
         # SHIFT để chạy
-        if key in (arcade.key.LSHIFT, arcade.key.RSHIFT):
+        elif key in (arcade.key.LSHIFT, arcade.key.RSHIFT):
             self.soldier.is_running = True
             if self.soldier.change_x > 0: self.soldier.change_x = PLAYER_RUN_SPEED
             elif self.soldier.change_x < 0: self.soldier.change_x = -PLAYER_RUN_SPEED

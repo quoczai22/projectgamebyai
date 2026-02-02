@@ -44,14 +44,12 @@ class CaveView(arcade.View):
             return
         
         # 2. Nhân vật
-        # Soldier xuất hiện lùi vào trong map
         self.soldier = Soldier()
-        self.soldier.center_x =100
+        self.soldier.center_x = 100
         self.soldier.center_y = 200
         self.soldier.is_running = False
         self.scene.add_sprite("Soldier", self.soldier)
 
-        # OrcBot xuất hiện ngoài màn hình bên phải
         self.orc_bot = OrcBot()
         self.orc_bot.center_x = SCREEN_WIDTH + 200
         self.orc_bot.center_y = 200
@@ -103,30 +101,19 @@ class CaveView(arcade.View):
                 self.fade_state = "PLAYING"
 
         elif self.fade_state == "PLAYING":
-            # Update physics
             self.soldier_engine.update()
             self.orc_engine.update()
-
-            # Update animation
             self.scene.update_animation(delta_time, ["Soldier", "OrcBot"])
-
-            # Bot Orc tìm đường tới Soldier
             self.orc_bot.update_ai(self.soldier, self.tile_map, self.orc_engine)
 
-            # Camera follow Soldier
             target_x = self.soldier.center_x - (SCREEN_WIDTH / 2)
-            if target_x < 0:
-                target_x = 0
+            if target_x < 0: target_x = 0
             max_x = self.map_width_pixels - SCREEN_WIDTH
-            if target_x > max_x:
-                target_x = max_x
+            if target_x > max_x: target_x = max_x
             self.view_left = arcade.math.lerp(self.view_left, target_x, 0.1)
 
-            # Giới hạn map cho Soldier
-            if self.soldier.left < 0:
-                self.soldier.left = 0
-            if self.soldier.right > self.map_width_pixels:
-                self.soldier.right = self.map_width_pixels
+            if self.soldier.left < 0: self.soldier.left = 0
+            if self.soldier.right > self.map_width_pixels: self.soldier.right = self.map_width_pixels
 
             if self.soldier.center_y < -100:
                 print("Rơi khỏi map! Reset vị trí.")
@@ -152,7 +139,12 @@ class CaveView(arcade.View):
         if self.fade_state != "PLAYING":
             return
 
-        if key in (arcade.key.LSHIFT, arcade.key.RSHIFT):
+        # --- ATTACK ---
+        if key == arcade.key.F:
+            self.soldier.attack()
+
+        # --- MOVE ---
+        elif key in (arcade.key.LSHIFT, arcade.key.RSHIFT):
             self.soldier.is_running = True
             if self.soldier.change_x > 0: self.soldier.change_x = PLAYER_RUN_SPEED
             elif self.soldier.change_x < 0: self.soldier.change_x = -PLAYER_RUN_SPEED

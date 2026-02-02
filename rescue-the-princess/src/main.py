@@ -12,7 +12,7 @@ class MyGame(arcade.Window):
         super().__init__(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE, resizable=False)
 
     def setup(self):
-        start_view = CastleView()
+        start_view = MenuView()
         start_view.setup()
         self.show_view(start_view)
 

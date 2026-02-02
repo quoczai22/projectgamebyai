@@ -1,121 +1,95 @@
 import arcade
 import os
 from settings import SCREEN_WIDTH, SCREEN_HEIGHT, ASSETS_PATH
+from sound_manager import SoundManager
+from pixel_text import PixelText # Import class chữ mới
 
 class SettingsView(arcade.View):
-    def __init__(self):
+    def __init__(self, sound_manager: SoundManager):
         super().__init__()
-        
-        # --- 1. GIAO DIỆN (Giữ nguyên) ---
+        self.sound_manager = sound_manager
+
+        # --- Ảnh nền ---
         self.ui_list = arcade.SpriteList()
         image_path = os.path.join(ASSETS_PATH, "images", "menu_view.png")
         if os.path.exists(image_path):
-            try:
-                bg_sprite = arcade.Sprite(image_path)
-                bg_sprite.center_x = SCREEN_WIDTH / 2
-                bg_sprite.center_y = SCREEN_HEIGHT / 2
-                bg_sprite.width = SCREEN_WIDTH
-                bg_sprite.height = SCREEN_HEIGHT
-                self.ui_list.append(bg_sprite)
-            except Exception as e:
-                print(f"Lỗi ảnh nền: {e}")
+            bg_sprite = arcade.Sprite(image_path)
+            bg_sprite.center_x = SCREEN_WIDTH / 2
+            bg_sprite.center_y = SCREEN_HEIGHT / 2
+            bg_sprite.width = SCREEN_WIDTH
+            bg_sprite.height = SCREEN_HEIGHT
+            self.ui_list.append(bg_sprite)
 
-        # --- 2. FONT (Giữ nguyên) ---
-        font_path = os.path.join(ASSETS_PATH, "fonts", "PressStart2P-Regular.ttf")
-        self.pixel_font = "Arial"
-        if os.path.exists(font_path):
-            arcade.load_font(font_path)
-            self.pixel_font = "Press Start 2P"
-
-        # --- QUAN TRỌNG: KHÔNG LOAD NHẠC Ở ĐÂY NỮA ---
-        # Chúng ta sẽ dùng trực tiếp self.window.bg_player được tạo bên Menu
+        self.mode = 1 # 1: Music, 2: Effects
 
     def on_show_view(self):
         self.window.set_mouse_visible(True)
         arcade.set_background_color(arcade.color.DARK_SLATE_BLUE)
-        
-        # Kiểm tra xem biến nhạc đã được khởi tạo bên Menu chưa (đề phòng lỗi)
-        if not hasattr(self.window, "music_volume"):
-            self.window.music_volume = 0.5
-        if not hasattr(self.window, "is_muted"):
-            self.window.is_muted = False
 
     def on_draw(self):
         self.clear()
         self.ui_list.draw()
 
         # Tiêu đề
-        arcade.draw_text("SETTINGS",
-                         SCREEN_WIDTH//2, SCREEN_HEIGHT//2+100,
-                         arcade.color.GOLD, 30,
-                         font_name=self.pixel_font,
-                         anchor_x="center", bold=True)
+        PixelText("SETTINGS", SCREEN_WIDTH//2, SCREEN_HEIGHT//2 + 120,
+                  arcade.color.GOLD, size=30, anchor_x="center", bold=True).draw()
 
-        # --- HIỂN THỊ TRẠNG THÁI (Lấy từ self.window) ---
-        # Lấy giá trị hiện tại từ cửa sổ game
-        current_vol = self.window.music_volume
-        is_muted = self.window.is_muted
+        # Mode
+        mode_str = "< MODE: MUSIC >" if self.mode == 1 else "< MODE: EFFECTS >"
+        color_mode = arcade.color.CYAN if self.mode == 1 else arcade.color.ORANGE
+        PixelText(mode_str, SCREEN_WIDTH//2, SCREEN_HEIGHT//2 + 60,
+                  color_mode, size=16, anchor_x="center").draw()
 
-        # Vẽ thanh Volume
-        bar_count = int(current_vol * 10) # 0.5 -> 5 vạch
+        # Lấy dữ liệu Volume
+        if self.mode == 1:
+            vol = self.sound_manager.music_volume
+            muted = self.sound_manager.is_muted_music
+        else:
+            vol = self.sound_manager.effect_volume
+            muted = self.sound_manager.is_muted_effect
+
+        # Vẽ thanh Bar
+        bar_count = int(vol * 10)
         bar_str = "|" * bar_count + "." * (10 - bar_count)
         
-        if is_muted: 
-            status_text = "MUTED"
-            color = arcade.color.RED
-            bar_display = "[MUTED]"
+        if muted:
+            PixelText("MUTED", SCREEN_WIDTH//2, SCREEN_HEIGHT//2, 
+                      arcade.color.RED, size=16, anchor_x="center").draw()
+            PixelText("[   MUTE   ]", SCREEN_WIDTH//2, SCREEN_HEIGHT//2 - 40, 
+                      arcade.color.RED, size=16, anchor_x="center").draw()
         else:
-            status_text = f"VOL: {int(current_vol * 100)}%"
-            color = arcade.color.WHITE
-            bar_display = f"[{bar_str}]"
-
-        arcade.draw_text(status_text,
-                         SCREEN_WIDTH//2, SCREEN_HEIGHT//2,
-                         color, 16,
-                         font_name=self.pixel_font,
-                         anchor_x="center")
-        
-        arcade.draw_text(bar_display,
-                         SCREEN_WIDTH//2, SCREEN_HEIGHT//2 - 40,
-                         arcade.color.GREEN if not is_muted else arcade.color.RED,
-                         16,
-                         font_name=self.pixel_font,
-                         anchor_x="center")
+            PixelText(f"VOL: {int(vol * 100)}%", SCREEN_WIDTH//2, SCREEN_HEIGHT//2, 
+                      arcade.color.WHITE, size=16, anchor_x="center").draw()
+            PixelText(f"[{bar_str}]", SCREEN_WIDTH//2, SCREEN_HEIGHT//2 - 40, 
+                      arcade.color.GREEN, size=16, anchor_x="center").draw()
 
         # Hướng dẫn
-        arcade.draw_text("UP/DOWN: Volume   M: Mute   ESC: Back",
-                         SCREEN_WIDTH//2, SCREEN_HEIGHT//2-100,
-                         arcade.color.LIGHT_GRAY, 10,
-                         font_name=self.pixel_font,
-                         anchor_x="center")
+        PixelText("1: Music   2: Effects", SCREEN_WIDTH//2, SCREEN_HEIGHT//2 - 100,
+                  arcade.color.LIGHT_GRAY, size=10, anchor_x="center").draw()
+        PixelText("UP/DOWN: Adjust   M: Mute   ESC: Back", SCREEN_WIDTH//2, SCREEN_HEIGHT//2 - 130,
+                  arcade.color.LIGHT_GRAY, size=10, anchor_x="center").draw()
 
     def on_key_press(self, key, modifiers):
-        # Lấy player nhạc đang chạy từ Window
-        player = getattr(self.window, "bg_player", None)
-
-        if key == arcade.key.M:
-            # Đảo trạng thái Mute của Window
-            self.window.is_muted = not self.window.is_muted
-            
-            # Cập nhật ngay lập tức cho player
-            if player:
-                player.volume = 0.0 if self.window.is_muted else self.window.music_volume
-
+        if key == arcade.key.NUM_1: self.mode = 1
+        elif key == arcade.key.NUM_2: self.mode = 2
+        elif key == arcade.key.M:
+            if self.mode == 1: self.sound_manager.toggle_music_mute()
+            else: self.sound_manager.toggle_effect_mute()
+        
         elif key == arcade.key.UP:
-            if not self.window.is_muted and self.window.music_volume < 1.0:
-                self.window.music_volume = min(1.0, self.window.music_volume + 0.1)
-                # Cập nhật volume thật
-                if player:
-                    player.volume = self.window.music_volume
-                    
+            if self.mode == 1 and not self.sound_manager.is_muted_music:
+                self.sound_manager.set_music_volume(self.sound_manager.music_volume + 0.1)
+            elif self.mode == 2 and not self.sound_manager.is_muted_effect:
+                self.sound_manager.set_effect_volume(self.sound_manager.effect_volume + 0.1)
+                
         elif key == arcade.key.DOWN:
-            if not self.window.is_muted and self.window.music_volume > 0.0:
-                self.window.music_volume = max(0.0, self.window.music_volume - 0.1)
-                # Cập nhật volume thật
-                if player:
-                    player.volume = self.window.music_volume
-                    
+            if self.mode == 1 and not self.sound_manager.is_muted_music:
+                self.sound_manager.set_music_volume(self.sound_manager.music_volume - 0.1)
+            elif self.mode == 2 and not self.sound_manager.is_muted_effect:
+                self.sound_manager.set_effect_volume(self.sound_manager.effect_volume - 0.1)
+
         elif key == arcade.key.ESCAPE:
-            # Quay lại Menu (Menu sẽ tự nhận biết nhạc đang chạy nên không phát lại)
-            from menu_view import MenuView 
-            self.window.show_view(MenuView())
+            from menu_view import MenuView
+            # Trả sound_manager về Menu để nó biết nhạc đã chỉnh thế nào
+            menu = MenuView(self.sound_manager)
+            self.window.show_view(menu)
